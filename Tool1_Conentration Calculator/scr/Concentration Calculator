@@ -1,1 +1,106 @@
+import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QComboBox, QMessageBox
 
+class ConcentrationCalculator(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+        
+    def initUI(self):
+        self.setWindowTitle('Concentration Calculator')
+        self.setGeometry(100, 100, 400, 300)
+        
+        layout = QVBoxLayout()
+        
+        # Initial concentration
+        self.init_conc_label = QLabel('Initial Concentration:')
+        self.init_conc_input = QLineEdit()
+        self.init_conc_unit = QComboBox()
+        self.init_conc_unit.addItems(['pM', 'nM', 'µM', 'mM', 'M', 'ppm', 'ppb', 'ppt'])
+        layout.addWidget(self.init_conc_label)
+        layout.addWidget(self.init_conc_input)
+        layout.addWidget(self.init_conc_unit)
+        
+        # Initial volume
+        self.init_vol_label = QLabel('Initial Volume:')
+        self.init_vol_input = QLineEdit()
+        self.init_vol_unit = QComboBox()
+        self.init_vol_unit.addItems(['L', 'mL', 'µL'])
+        layout.addWidget(self.init_vol_label)
+        layout.addWidget(self.init_vol_input)
+        layout.addWidget(self.init_vol_unit)
+        
+        # Added concentration
+        self.added_conc_label = QLabel('Added Concentration:')
+        self.added_conc_input = QLineEdit()
+        self.added_conc_unit = QComboBox()
+        self.added_conc_unit.addItems(['pM', 'nM', 'µM', 'mM', 'M', 'ppm', 'ppb', 'ppt'])
+        layout.addWidget(self.added_conc_label)
+        layout.addWidget(self.added_conc_input)
+        layout.addWidget(self.added_conc_unit)
+        
+        # Added volume
+        self.added_vol_label = QLabel('Added Volume:')
+        self.added_vol_input = QLineEdit()
+        self.added_vol_unit = QComboBox()
+        self.added_vol_unit.addItems(['L', 'mL', 'µL'])
+        layout.addWidget(self.added_vol_label)
+        layout.addWidget(self.added_vol_input)
+        layout.addWidget(self.added_vol_unit)
+        
+        # Calculate button
+        self.calc_button = QPushButton('Calculate')
+        self.calc_button.clicked.connect(self.calculate_concentration)
+        layout.addWidget(self.calc_button)
+        
+        # Result label
+        self.result_label = QLabel('New Concentration: ')
+        layout.addWidget(self.result_label)
+        
+        self.setLayout(layout)
+        
+    def convert_to_base_unit(self, value, unit):
+        """Convert the given value to the base unit (µM for concentration, µL for volume)."""
+        conversion_factors = {
+            'pM': 1e-6, 'nM': 1e-3, 'µM': 1, 'mM': 1e3, 'M': 1e6,
+            'ppm': 1, 'ppb': 1e-3, 'ppt': 1e-6,
+            'L': 1e6, 'mL': 1e3, 'µL': 1
+        }
+        return value * conversion_factors[unit]
+    
+    def calculate_concentration(self):
+        try:
+            # Get input values
+            initial_concentration = float(self.init_conc_input.text())
+            initial_volume = float(self.init_vol_input.text())
+            added_concentration = float(self.added_conc_input.text())
+            added_volume = float(self.added_vol_input.text())
+            
+            # Get selected units
+            init_conc_unit = self.init_conc_unit.currentText()
+            init_vol_unit = self.init_vol_unit.currentText()
+            added_conc_unit = self.added_conc_unit.currentText()
+            added_vol_unit = self.added_vol_unit.currentText()
+            
+            # Convert to base units (µM for concentration, µL for volume)
+            initial_concentration = self.convert_to_base_unit(initial_concentration, init_conc_unit)
+            initial_volume = self.convert_to_base_unit(initial_volume, init_vol_unit)
+            added_concentration = self.convert_to_base_unit(added_concentration, added_conc_unit)
+            added_volume = self.convert_to_base_unit(added_volume, added_vol_unit)
+            
+            # Calculate new concentration
+            initial_amount = initial_concentration * initial_volume
+            added_amount = added_concentration * added_volume
+            total_volume = initial_volume + added_volume
+            new_concentration = (initial_amount + added_amount) / total_volume
+            
+            # Display result
+            self.result_label.setText(f'New Concentration: {new_concentration:.6f} µM')
+        except ValueError:
+            QMessageBox.warning(self, 'Input Error', 'Please enter valid numbers.')
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    ex = ConcentrationCalculator()
+    ex.show()
+    sys.exit(app.exec_())
